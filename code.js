@@ -15,7 +15,6 @@ const PURPLE = { r: 0.486, g: 0.227, b: 0.929 }; // #7C3AED
 const WHITE = { r: 1, g: 1, b: 1 };
 const NEAR_BLACK = { r: 0.102, g: 0.102, b: 0.102 }; // #1A1A1A
 const LAVENDER = { r: 0.847, g: 0.706, b: 0.996 }; // #D8B4FE
-const CYAN = { r: 0.376, g: 0.647, b: 0.980 }; // #60A5FA
 figma.showUI(__html__, { width: 340, height: 480, title: 'getitdone' });
 // On open: check if a sticker is already selected
 const selected = figma.currentPage.selection[0];
@@ -85,14 +84,6 @@ function buildSticker(data) {
         wrapper.setPluginData(PLUGIN_DATA_KEY, JSON.stringify(data));
         wrapper.counterAxisSizingMode = 'FIXED';
         wrapper.resize(400, 100); // will grow with content
-        // "to-dos" label
-        const label = figma.createText();
-        label.name = 'label';
-        label.characters = 'to-dos';
-        label.fontName = { family: 'Inter', style: 'Regular' };
-        label.fontSize = 16;
-        label.fills = [{ type: 'SOLID', color: CYAN }];
-        wrapper.appendChild(label);
         // Card frame (vertical auto-layout)
         const card = figma.createFrame();
         card.name = 'card';
@@ -112,7 +103,7 @@ function buildSticker(data) {
         const header = buildHeaderSection(data);
         card.appendChild(header);
         // Body section
-        const body = yield buildBodySection(data);
+        const body = buildBodySection(data);
         card.appendChild(body);
         wrapper.primaryAxisSizingMode = 'AUTO';
         wrapper.counterAxisSizingMode = 'AUTO';
@@ -172,69 +163,42 @@ function buildHeaderSection(data) {
     return header;
 }
 function buildBodySection(data) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const body = figma.createFrame();
-        body.name = 'body';
-        body.layoutMode = 'VERTICAL';
-        body.itemSpacing = 16;
-        body.paddingTop = 24;
-        body.paddingBottom = 32;
-        body.paddingLeft = 24;
-        body.paddingRight = 24;
-        body.fills = [{ type: 'SOLID', color: WHITE }];
-        body.primaryAxisSizingMode = 'AUTO';
-        body.counterAxisSizingMode = 'FIXED';
-        body.layoutAlign = 'STRETCH';
-        if (data.todos.length === 0) {
-            const placeholder = figma.createText();
-            placeholder.name = 'placeholder';
-            placeholder.characters = 'No to-dos yet.';
-            placeholder.fontName = { family: 'Inter', style: 'Regular' };
-            placeholder.fontSize = 16;
-            placeholder.fills = [{ type: 'SOLID', color: { r: 0.7, g: 0.7, b: 0.7 } }];
-            body.appendChild(placeholder);
-            return body;
-        }
-        for (const todo of data.todos) {
-            const row = yield buildTodoRow(todo);
-            body.appendChild(row);
-        }
+    const body = figma.createFrame();
+    body.name = 'body';
+    body.layoutMode = 'VERTICAL';
+    body.itemSpacing = 4;
+    body.paddingTop = 16;
+    body.paddingBottom = 24;
+    body.paddingLeft = 16;
+    body.paddingRight = 16;
+    body.fills = [{ type: 'SOLID', color: WHITE }];
+    body.primaryAxisSizingMode = 'AUTO';
+    body.counterAxisSizingMode = 'FIXED';
+    body.layoutAlign = 'STRETCH';
+    if (data.todos.length === 0) {
+        const placeholder = figma.createText();
+        placeholder.name = 'placeholder';
+        placeholder.fontName = { family: 'Inter', style: 'Regular' };
+        placeholder.characters = 'No to-dos yet.';
+        placeholder.fontSize = 16;
+        placeholder.fills = [{ type: 'SOLID', color: { r: 0.7, g: 0.7, b: 0.7 } }];
+        body.appendChild(placeholder);
         return body;
-    });
-}
-function buildTodoRow(todo) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const row = figma.createFrame();
-        row.name = `todo-${todo.id}`;
-        row.layoutMode = 'HORIZONTAL';
-        row.itemSpacing = 12;
-        row.counterAxisAlignItems = 'MIN';
-        row.fills = [];
-        row.primaryAxisSizingMode = 'FIXED';
-        row.counterAxisSizingMode = 'AUTO';
-        row.layoutAlign = 'STRETCH';
-        // Checkbox
-        const checkbox = figma.createRectangle();
-        checkbox.name = 'checkbox';
-        checkbox.resize(10, 10);
-        checkbox.fills = todo.done ? [{ type: 'SOLID', color: NEAR_BLACK }] : [];
-        checkbox.strokes = [{ type: 'SOLID', color: NEAR_BLACK }];
-        checkbox.strokeWeight = 1.5;
-        checkbox.layoutAlign = 'INHERIT';
-        row.appendChild(checkbox);
-        // Text
-        const text = figma.createText();
-        text.name = 'text';
-        text.characters = todo.text;
-        text.fontName = { family: 'Inter', style: 'Regular' };
-        text.fontSize = 16;
-        text.fills = [{ type: 'SOLID', color: NEAR_BLACK }];
-        text.textDecoration = todo.done ? 'STRIKETHROUGH' : 'NONE';
-        text.layoutGrow = 1;
-        text.textAutoResize = 'HEIGHT';
-        row.appendChild(text);
-        return row;
-    });
+    }
+    for (const todo of data.todos) {
+        const line = figma.createText();
+        line.name = `todo-${todo.id}`;
+        line.fontName = { family: 'Inter', style: 'Regular' };
+        line.characters = (todo.done ? '\u25A0' : '\u25A1') + '  ' + todo.text;
+        line.fontSize = 16;
+        line.lineHeight = { value: 24, unit: 'PIXELS' };
+        line.fills = [{ type: 'SOLID', color: NEAR_BLACK }];
+        line.textDecoration = todo.done ? 'STRIKETHROUGH' : 'NONE';
+        line.textAutoResize = 'HEIGHT';
+        line.layoutAlign = 'STRETCH';
+        body.appendChild(line);
+    }
+    return body;
 }
 function rebuildSticker(wrapper, data) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -254,7 +218,7 @@ function rebuildSticker(wrapper, data) {
         const oldBody = card.findOne(n => n.name === 'body');
         if (oldBody)
             oldBody.remove();
-        const newBody = yield buildBodySection(data);
+        const newBody = buildBodySection(data);
         card.appendChild(newBody);
     });
 }

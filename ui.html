@@ -15,6 +15,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   /* ── Default view ── */
@@ -28,10 +29,32 @@
     padding: 24px;
   }
 
-  #default-view p {
-    color: #888;
-    font-size: 12px;
+  .shortcut-hint {
+    color: #aaa;
+    font-size: 11px;
   }
+
+  kbd {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 10px;
+    font-family: inherit;
+  }
+
+  .btn-primary {
+    background: #7C3AED;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary:hover { background: #6d28d9; }
 
   /* ── Edit view ── */
   #edit-view {
@@ -41,14 +64,14 @@
     overflow: hidden;
   }
 
-  /* Header section */
+  /* Purple header */
   .edit-header {
     background: #7C3AED;
-    padding: 20px;
+    padding: 16px 16px 12px;
     flex-shrink: 0;
   }
 
-  .edit-header-row {
+  .header-row {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -60,212 +83,203 @@
     border: none;
     outline: none;
     color: #fff;
-    font-size: 22px;
+    font-size: 16px;
     font-weight: 700;
     font-family: inherit;
-    placeholder-color: rgba(255,255,255,0.5);
   }
+  #header-input::placeholder { color: rgba(255,255,255,0.45); }
 
-  #header-input::placeholder { color: rgba(255,255,255,0.5); }
-
+  /* Calendar toggle button */
   .cal-btn {
     background: transparent;
     border: none;
     cursor: pointer;
-    font-size: 18px;
-    padding: 2px;
-    position: relative;
+    font-size: 16px;
+    padding: 2px 4px;
     line-height: 1;
+    border-radius: 4px;
+    color: rgba(255,255,255,0.8);
+    flex-shrink: 0;
   }
+  .cal-btn:hover { background: rgba(255,255,255,0.15); }
 
-  #date-input {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    pointer-events: none;
-  }
-
-  .deadline-row {
+  /* Date picker row — shown/hidden by JS */
+  .date-picker-row {
     display: none;
     align-items: center;
-    gap: 6px;
-    margin-top: 8px;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .date-picker-row.open { display: flex; }
+
+  #date-input {
+    flex: 1;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #fff;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    /* Make the calendar picker icon white */
+    color-scheme: dark;
   }
 
-  .deadline-row.visible { display: flex; }
-
-  .deadline-text {
-    color: #D8B4FE;
-    font-size: 15px;
-    font-style: italic;
-  }
-
-  .clear-date {
+  .clear-date-btn {
     background: transparent;
     border: none;
     color: rgba(255,255,255,0.6);
     cursor: pointer;
-    font-size: 14px;
-    padding: 0 2px;
+    font-size: 18px;
     line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  .clear-date-btn:hover { color: #fff; }
+
+  /* Deadline display row */
+  .deadline-display {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .deadline-display.visible { display: flex; }
+
+  .deadline-text {
+    color: #D8B4FE;
+    font-size: 13px;
+    font-style: italic;
+    flex: 1;
   }
 
-  .clear-date:hover { color: #fff; }
-
-  /* Body / todo list */
-  .edit-body {
+  /* ── Todo body ── */
+  .todo-body {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 12px 16px 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
   }
 
-  .todo-item {
+  /* Each existing todo row */
+  .todo-row {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    padding: 6px 0;
-    border-radius: 4px;
-  }
-
-  .todo-item:hover .delete-btn { opacity: 1; }
-
-  .todo-checkbox {
-    width: 18px;
-    height: 18px;
-    border: 2px solid #1a1a1a;
-    border-radius: 2px;
-    flex-shrink: 0;
+    padding: 5px 0;
     cursor: pointer;
-    margin-top: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.1s;
   }
+  .todo-row:hover .del-btn { opacity: 1; }
 
-  .todo-checkbox.done {
+  /* The 10×10 checkbox box */
+  .todo-box {
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid #1a1a1a;
+    flex-shrink: 0;
+    margin-top: 3px;
+    cursor: pointer;
+  }
+  .todo-box.checked {
     background: #1a1a1a;
   }
 
-  .todo-checkbox.done::after {
-    content: '';
-    width: 10px;
-    height: 6px;
-    border-left: 2px solid #fff;
-    border-bottom: 2px solid #fff;
-    transform: rotate(-45deg) translateY(-1px);
-  }
-
-  .todo-text {
+  .todo-label {
     flex: 1;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.5;
-    cursor: pointer;
     word-break: break-word;
+    cursor: pointer;
   }
-
-  .todo-text.done {
+  .todo-label.done {
     text-decoration: line-through;
     color: #999;
   }
 
-  .delete-btn {
+  .del-btn {
     opacity: 0;
     background: transparent;
     border: none;
     color: #bbb;
+    font-size: 15px;
     cursor: pointer;
-    font-size: 16px;
     padding: 0 2px;
     flex-shrink: 0;
-    transition: opacity 0.1s, color 0.1s;
     line-height: 1;
   }
+  .del-btn:hover { color: #e53e3e; opacity: 1; }
 
-  .delete-btn:hover { color: #e53e3e; }
+  /* Notion-like add row */
+  .add-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0 16px;
+  }
 
-  /* Add todo input */
-  .add-todo-row {
-    padding: 0 20px 16px;
+  .add-box-placeholder {
+    width: 10px;
+    height: 10px;
+    border: 1.5px dashed #bbb;
     flex-shrink: 0;
+    margin-top: 3px;
   }
 
   #new-todo-input {
-    width: 100%;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 13px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-
-  #new-todo-input:focus { border-color: #7C3AED; }
-  #new-todo-input::placeholder { color: #aaa; }
-
-  /* Shared button */
-  .btn-primary {
-    background: #7C3AED;
-    color: #fff;
+    flex: 1;
     border: none;
-    border-radius: 6px;
-    padding: 10px 20px;
+    outline: none;
     font-size: 13px;
     font-family: inherit;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s;
+    color: #1a1a1a;
+    background: transparent;
   }
-
-  .btn-primary:hover { background: #6d28d9; }
-
-  .shortcut-hint {
-    color: #aaa;
-    font-size: 11px;
-  }
-
-  kbd {
-    background: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    padding: 1px 5px;
-    font-size: 11px;
-    font-family: inherit;
-  }
+  #new-todo-input::placeholder { color: #bbb; }
 </style>
 </head>
 <body>
 
-<!-- Default view: no sticker selected -->
+<!-- Default view -->
 <div id="default-view">
   <button class="btn-primary" id="add-btn">+ Add Sticker</button>
-  <p class="shortcut-hint">or press <kbd>S</kbd></p>
+  <p class="shortcut-hint">or press <kbd>⌥⇧S</kbd></p>
 </div>
 
-<!-- Edit view: sticker selected -->
+<!-- Edit view -->
 <div id="edit-view">
+
+  <!-- Purple header -->
   <div class="edit-header">
-    <div class="edit-header-row">
+    <div class="header-row">
       <input id="header-input" type="text" placeholder="Header" maxlength="60" />
       <button class="cal-btn" id="cal-btn" title="Set deadline">📅</button>
+    </div>
+
+    <!-- Date picker: visible native input, toggled open/closed -->
+    <div class="date-picker-row" id="date-picker-row">
       <input id="date-input" type="date" />
+      <button class="clear-date-btn" id="clear-date" title="Remove date">×</button>
     </div>
-    <div class="deadline-row" id="deadline-row">
+
+    <!-- Deadline display (when date is set and picker is closed) -->
+    <div class="deadline-display" id="deadline-display">
       <span class="deadline-text" id="deadline-text"></span>
-      <button class="clear-date" id="clear-date" title="Remove date">×</button>
     </div>
   </div>
 
-  <div class="edit-body" id="todo-list"></div>
+  <!-- Todo list + add row -->
+  <div class="todo-body" id="todo-body">
+    <div id="todo-list"></div>
 
-  <div class="add-todo-row">
-    <input id="new-todo-input" type="text" placeholder="Add a to-do, press Enter…" maxlength="200" />
+    <!-- Notion-like integrated add row -->
+    <div class="add-row">
+      <div class="add-box-placeholder"></div>
+      <input id="new-todo-input" type="text" placeholder="Add a to-do…" maxlength="200" />
+    </div>
   </div>
+
 </div>
 
 <script>
@@ -284,53 +298,76 @@
     currentNodeId = nodeId;
     document.getElementById('default-view').style.display = 'none';
     document.getElementById('edit-view').style.display = 'flex';
-    renderEditView();
+    renderAll();
+    // Focus the input so user can start typing immediately
+    setTimeout(() => document.getElementById('new-todo-input').focus(), 50);
   }
 
-  function renderEditView() {
+  function renderAll() {
     document.getElementById('header-input').value = sticker.header;
     renderDeadline();
     renderTodos();
   }
 
+  // ── Deadline ──
   function renderDeadline() {
-    const row = document.getElementById('deadline-row');
+    const display = document.getElementById('deadline-display');
     const text = document.getElementById('deadline-text');
+    const input = document.getElementById('date-input');
+
     if (sticker.deadline) {
+      input.value = sticker.deadline;
       const date = new Date(sticker.deadline + 'T00:00:00');
       text.textContent = 'by ' + date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      row.classList.add('visible');
+      display.classList.add('visible');
     } else {
-      row.classList.remove('visible');
+      input.value = '';
+      display.classList.remove('visible');
     }
   }
 
+  function toggleDatePicker() {
+    const row = document.getElementById('date-picker-row');
+    const isOpen = row.classList.contains('open');
+    if (isOpen) {
+      row.classList.remove('open');
+    } else {
+      row.classList.add('open');
+      // Hide the display label while picker is open
+      document.getElementById('deadline-display').classList.remove('visible');
+      document.getElementById('date-input').focus();
+    }
+  }
+
+  // ── Todos ──
   function renderTodos() {
     const list = document.getElementById('todo-list');
     list.innerHTML = '';
-    sticker.todos.forEach((todo) => {
-      const item = document.createElement('div');
-      item.className = 'todo-item';
+    sticker.todos.forEach(todo => {
+      const row = document.createElement('div');
+      row.className = 'todo-row';
 
-      const checkbox = document.createElement('div');
-      checkbox.className = 'todo-checkbox' + (todo.done ? ' done' : '');
-      checkbox.addEventListener('click', () => toggleTodo(todo.id));
+      const box = document.createElement('div');
+      box.className = 'todo-box' + (todo.done ? ' checked' : '');
 
-      const text = document.createElement('span');
-      text.className = 'todo-text' + (todo.done ? ' done' : '');
-      text.textContent = todo.text;
-      text.addEventListener('click', () => toggleTodo(todo.id));
+      const label = document.createElement('span');
+      label.className = 'todo-label' + (todo.done ? ' done' : '');
+      label.textContent = todo.text;
 
       const del = document.createElement('button');
-      del.className = 'delete-btn';
+      del.className = 'del-btn';
       del.textContent = '×';
       del.title = 'Delete';
-      del.addEventListener('click', () => deleteTodo(todo.id));
 
-      item.appendChild(checkbox);
-      item.appendChild(text);
-      item.appendChild(del);
-      list.appendChild(item);
+      // Click box OR label → toggle done
+      box.addEventListener('click', (e) => { e.stopPropagation(); toggleTodo(todo.id); });
+      label.addEventListener('click', () => toggleTodo(todo.id));
+      del.addEventListener('click', (e) => { e.stopPropagation(); deleteTodo(todo.id); });
+
+      row.appendChild(box);
+      row.appendChild(label);
+      row.appendChild(del);
+      list.appendChild(row);
     });
   }
 
@@ -371,37 +408,40 @@
     sync();
   });
 
-  document.getElementById('cal-btn').addEventListener('click', () => {
-    const input = document.getElementById('date-input');
-    if (sticker.deadline) input.value = sticker.deadline;
-    input.showPicker ? input.showPicker() : input.click();
-  });
+  document.getElementById('cal-btn').addEventListener('click', toggleDatePicker);
 
   document.getElementById('date-input').addEventListener('change', (e) => {
     sticker.deadline = e.target.value || null;
+    // Close picker and show display
+    document.getElementById('date-picker-row').classList.remove('open');
     renderDeadline();
     sync();
   });
 
-  document.getElementById('clear-date').addEventListener('click', () => {
+  document.getElementById('clear-date').addEventListener('click', (e) => {
+    e.stopPropagation();
     sticker.deadline = null;
     document.getElementById('date-input').value = '';
+    document.getElementById('date-picker-row').classList.remove('open');
     renderDeadline();
     sync();
   });
 
   document.getElementById('new-todo-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       addTodo(e.target.value);
       e.target.value = '';
+      // Keep focus so user can type the next item immediately
+      e.target.focus();
     }
   });
 
-  // S shortcut → add sticker (only when default view is active and not typing)
+  // Option+Shift+S → add sticker (only when default view active, not typing)
   document.addEventListener('keydown', (e) => {
     const tag = document.activeElement.tagName;
     const isTyping = tag === 'INPUT' || tag === 'TEXTAREA';
-    if (!isTyping && (e.key === 's' || e.key === 'S') && !e.metaKey && !e.ctrlKey) {
+    if (!isTyping && e.altKey && e.shiftKey && e.code === 'KeyS') {
       addSticker();
     }
   });
