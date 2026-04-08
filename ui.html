@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>getitdone</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    background: #fff;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Default view ── */
+  #default-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+  }
+
+  #default-view p {
+    color: #888;
+    font-size: 12px;
+  }
+
+  /* ── Edit view ── */
+  #edit-view {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* Header section */
+  .edit-header {
+    background: #7C3AED;
+    padding: 20px;
+    flex-shrink: 0;
+  }
+
+  .edit-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #header-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    font-family: inherit;
+    placeholder-color: rgba(255,255,255,0.5);
+  }
+
+  #header-input::placeholder { color: rgba(255,255,255,0.5); }
+
+  .cal-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 2px;
+    position: relative;
+    line-height: 1;
+  }
+
+  #date-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .deadline-row {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .deadline-row.visible { display: flex; }
+
+  .deadline-text {
+    color: #D8B4FE;
+    font-size: 15px;
+    font-style: italic;
+  }
+
+  .clear-date {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    line-height: 1;
+  }
+
+  .clear-date:hover { color: #fff; }
+
+  /* Body / todo list */
+  .edit-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+    border-radius: 4px;
+  }
+
+  .todo-item:hover .delete-btn { opacity: 1; }
+
+  .todo-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #1a1a1a;
+    border-radius: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
+  }
+
+  .todo-checkbox.done {
+    background: #1a1a1a;
+  }
+
+  .todo-checkbox.done::after {
+    content: '';
+    width: 10px;
+    height: 6px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+
+  .todo-text {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.5;
+    cursor: pointer;
+    word-break: break-word;
+  }
+
+  .todo-text.done {
+    text-decoration: line-through;
+    color: #999;
+  }
+
+  .delete-btn {
+    opacity: 0;
+    background: transparent;
+    border: none;
+    color: #bbb;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 2px;
+    flex-shrink: 0;
+    transition: opacity 0.1s, color 0.1s;
+    line-height: 1;
+  }
+
+  .delete-btn:hover { color: #e53e3e; }
+
+  /* Add todo input */
+  .add-todo-row {
+    padding: 0 20px 16px;
+    flex-shrink: 0;
+  }
+
+  #new-todo-input {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  #new-todo-input:focus { border-color: #7C3AED; }
+  #new-todo-input::placeholder { color: #aaa; }
+
+  /* Shared button */
+  .btn-primary {
+    background: #7C3AED;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-primary:hover { background: #6d28d9; }
+
+  .shortcut-hint {
+    color: #aaa;
+    font-size: 11px;
+  }
+
+  kbd {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 11px;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+
+<!-- Default view: no sticker selected -->
+<div id="default-view">
+  <button class="btn-primary" id="add-btn">+ Add Sticker</button>
+  <p class="shortcut-hint">or press <kbd>S</kbd></p>
+</div>
+
+<!-- Edit view: sticker selected -->
+<div id="edit-view">
+  <div class="edit-header">
+    <div class="edit-header-row">
+      <input id="header-input" type="text" placeholder="Header" maxlength="60" />
+      <button class="cal-btn" id="cal-btn" title="Set deadline">📅</button>
+      <input id="date-input" type="date" />
+    </div>
+    <div class="deadline-row" id="deadline-row">
+      <span class="deadline-text" id="deadline-text"></span>
+      <button class="clear-date" id="clear-date" title="Remove date">×</button>
+    </div>
+  </div>
+
+  <div class="edit-body" id="todo-list"></div>
+
+  <div class="add-todo-row">
+    <input id="new-todo-input" type="text" placeholder="Add a to-do, press Enter…" maxlength="200" />
+  </div>
+</div>
+
+<script>
+  let currentNodeId = null;
+  let sticker = { header: '', deadline: null, todos: [] };
+
+  // ── Views ──
+  function showDefault() {
+    document.getElementById('default-view').style.display = 'flex';
+    document.getElementById('edit-view').style.display = 'none';
+    currentNodeId = null;
+  }
+
+  function showEdit(data, nodeId) {
+    sticker = JSON.parse(JSON.stringify(data));
+    currentNodeId = nodeId;
+    document.getElementById('default-view').style.display = 'none';
+    document.getElementById('edit-view').style.display = 'flex';
+    renderEditView();
+  }
+
+  function renderEditView() {
+    document.getElementById('header-input').value = sticker.header;
+    renderDeadline();
+    renderTodos();
+  }
+
+  function renderDeadline() {
+    const row = document.getElementById('deadline-row');
+    const text = document.getElementById('deadline-text');
+    if (sticker.deadline) {
+      const date = new Date(sticker.deadline + 'T00:00:00');
+      text.textContent = 'by ' + date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      row.classList.add('visible');
+    } else {
+      row.classList.remove('visible');
+    }
+  }
+
+  function renderTodos() {
+    const list = document.getElementById('todo-list');
+    list.innerHTML = '';
+    sticker.todos.forEach((todo) => {
+      const item = document.createElement('div');
+      item.className = 'todo-item';
+
+      const checkbox = document.createElement('div');
+      checkbox.className = 'todo-checkbox' + (todo.done ? ' done' : '');
+      checkbox.addEventListener('click', () => toggleTodo(todo.id));
+
+      const text = document.createElement('span');
+      text.className = 'todo-text' + (todo.done ? ' done' : '');
+      text.textContent = todo.text;
+      text.addEventListener('click', () => toggleTodo(todo.id));
+
+      const del = document.createElement('button');
+      del.className = 'delete-btn';
+      del.textContent = '×';
+      del.title = 'Delete';
+      del.addEventListener('click', () => deleteTodo(todo.id));
+
+      item.appendChild(checkbox);
+      item.appendChild(text);
+      item.appendChild(del);
+      list.appendChild(item);
+    });
+  }
+
+  // ── Actions ──
+  function addSticker() {
+    parent.postMessage({ pluginMessage: { type: 'create-sticker' } }, '*');
+  }
+
+  function sync() {
+    if (!currentNodeId) return;
+    parent.postMessage({ pluginMessage: { type: 'update-sticker', nodeId: currentNodeId, data: sticker } }, '*');
+  }
+
+  function toggleTodo(id) {
+    const todo = sticker.todos.find(t => t.id === id);
+    if (todo) { todo.done = !todo.done; renderTodos(); sync(); }
+  }
+
+  function deleteTodo(id) {
+    sticker.todos = sticker.todos.filter(t => t.id !== id);
+    renderTodos();
+    sync();
+  }
+
+  function addTodo(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    sticker.todos.push({ id: Date.now().toString(), text: trimmed, done: false });
+    renderTodos();
+    sync();
+  }
+
+  // ── Event listeners ──
+  document.getElementById('add-btn').addEventListener('click', addSticker);
+
+  document.getElementById('header-input').addEventListener('input', (e) => {
+    sticker.header = e.target.value;
+    sync();
+  });
+
+  document.getElementById('cal-btn').addEventListener('click', () => {
+    const input = document.getElementById('date-input');
+    if (sticker.deadline) input.value = sticker.deadline;
+    input.showPicker ? input.showPicker() : input.click();
+  });
+
+  document.getElementById('date-input').addEventListener('change', (e) => {
+    sticker.deadline = e.target.value || null;
+    renderDeadline();
+    sync();
+  });
+
+  document.getElementById('clear-date').addEventListener('click', () => {
+    sticker.deadline = null;
+    document.getElementById('date-input').value = '';
+    renderDeadline();
+    sync();
+  });
+
+  document.getElementById('new-todo-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      addTodo(e.target.value);
+      e.target.value = '';
+    }
+  });
+
+  // S shortcut → add sticker (only when default view is active and not typing)
+  document.addEventListener('keydown', (e) => {
+    const tag = document.activeElement.tagName;
+    const isTyping = tag === 'INPUT' || tag === 'TEXTAREA';
+    if (!isTyping && (e.key === 's' || e.key === 'S') && !e.metaKey && !e.ctrlKey) {
+      addSticker();
+    }
+  });
+
+  // ── Messages from plugin ──
+  window.onmessage = (event) => {
+    const msg = event.data.pluginMessage;
+    if (!msg) return;
+    if (msg.type === 'load-sticker') showEdit(msg.data, msg.nodeId);
+    if (msg.type === 'deselect') showDefault();
+  };
+</script>
+</body>
+</html>
