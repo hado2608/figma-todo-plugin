@@ -2,7 +2,36 @@
 
 ## Overview
 
-**getitdone** is a Figma plugin that lets users place sticky-note-style to-do lists directly onto their canvas. Each sticker is a native Figma frame that can be edited via the plugin UI.
+**getitdone** is a Figma plugin that lets users place to-do card stickers directly onto their canvas. Each sticker has a **purple header** (title + deadline) and a **white body** (checkbox list). Cards are native Figma frames editable via the plugin UI.
+
+---
+
+## Visual Design Reference
+
+```
+  to-dos          ← small cyan label above card (separate text node)
+┌──────────────────────────────┐
+│  Header          (purple bg) │  ← bold white title
+│  by Wed 4/8                  │  ← italic white deadline subtitle
+├──────────────────────────────┤
+│  □  UI kit done              │  ← square checkbox + dark text
+│  □  need the testing plan    │
+│  □  reconstruct the MVP      │
+│     • 20-30 mins test        │  ← optional sub-bullet
+│  □  try to reconstruct page  │
+└──────────────────────────────┘
+```
+
+**Colors:**
+- Header bg: `#7C3AED` (purple)
+- Header text: `#FFFFFF`
+- Deadline text: `#D8B4FE` (lighter purple/lavender)
+- Body bg: `#FFFFFF`
+- Todo text: `#1A1A1A` (near black)
+- Checkbox: `#1A1A1A` outline, unfilled → on done: filled or strikethrough text
+- Label: `#60A5FA` (cyan/blue)
+
+**Dimensions:** ~400×500px, no corner radius on card (straight edges)
 
 ---
 
@@ -74,6 +103,7 @@ Each sticker stores its state in the frame's `pluginData`:
 ```ts
 interface TodoSticker {
   header: string;
+  deadline: string;   // e.g. "by Wed 4/8" — optional subtitle
   todos: Array<{
     id: string;
     text: string;
@@ -123,11 +153,16 @@ Persisted via `node.setPluginData('todos', JSON.stringify(data))` so sticker sta
 - [ ] Style: clean, minimal, matches Figma's aesthetic
 
 ### Phase 4 — Sticker Rendering Logic
-- [ ] Use Figma `TextNode` for each to-do item
-- [ ] Apply `TextDecoration = "STRIKETHROUGH"` for done items
-- [ ] Use `FrameNode` as container (auto-layout vertical for easy stacking)
-- [ ] Set `fills` to a warm yellow (`#FFF176`) for the sticker background
-- [ ] Header uses bold weight; to-do items use regular weight
+- [ ] Outer `FrameNode`: auto-layout vertical, ~400px wide, no corner radius
+- [ ] **"to-dos" label**: small `TextNode` above the card, color `#60A5FA`, placed separately on canvas
+- [ ] **Header section** (`FrameNode`, purple `#7C3AED` fill, padding 24px):
+  - Title: `TextNode`, bold, white, ~28px
+  - Deadline subtitle: `TextNode`, italic, `#D8B4FE`, ~18px (optional field)
+- [ ] **Body section** (`FrameNode`, white fill, auto-layout vertical, padding 24px, gap 16px):
+  - Per todo: horizontal auto-layout frame with:
+    - Checkbox: `RectangleNode` ~20×20px, stroke `#1A1A1A`, no fill (unchecked) or filled (checked)
+    - Text: `TextNode`, `#1A1A1A`, ~20px, wraps
+  - Done state: checkbox fill `#1A1A1A` + text `TextDecoration = "STRIKETHROUGH"`
 
 ### Phase 5 — Polish
 - [ ] Handle edge cases: empty todos, very long text, no header
