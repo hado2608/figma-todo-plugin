@@ -118,16 +118,7 @@
       {
         name: "to-do",
         direction: "vertical",
-        width: 320,
-        effect: [{
-          type: "DROP_SHADOW",
-          color: { r: 0, g: 0, b: 0, a: 0.12 },
-          offset: { x: 0, y: 2 },
-          blur: 8,
-          spread: 0,
-          visible: true,
-          blendMode: "NORMAL"
-        }]
+        width: 320
       },
       /* @__PURE__ */ figma.widget.h(
         AutoLayout,
@@ -153,7 +144,7 @@
               onTextEditEnd: (e) => setHeader(e.characters || "Header"),
               placeholder: "Header",
               fontFamily: "Inter",
-              fontWeight: "bold",
+              fontWeight: 700,
               fontSize: 16,
               fill: WHITE,
               width: "fill-parent"
@@ -230,7 +221,6 @@
               height: 10,
               stroke: GRAY,
               strokeWidth: 1.5,
-              strokeDashes: [2, 2],
               fill: WHITE
             }
           ),
