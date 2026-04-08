@@ -41,6 +41,9 @@
       if (!trimmed) return;
       setTodos([...todos, { id: String(Date.now()), text: trimmed, done: false }]);
     }
+    function deleteTodo(id) {
+      setTodos(todos.filter((t) => t.id !== id));
+    }
     function openDatePicker() {
       return new Promise((resolve) => {
         figma.showUI(`<!DOCTYPE html>
@@ -204,6 +207,15 @@
               onClick: () => toggleTodo(todo.id)
             },
             todo.text
+          ),
+          /* @__PURE__ */ figma.widget.h(
+            Text,
+            {
+              fontSize: 14,
+              fill: GRAY_RGB,
+              onClick: () => deleteTodo(todo.id)
+            },
+            "\xD7"
           )
         )),
         /* @__PURE__ */ figma.widget.h(

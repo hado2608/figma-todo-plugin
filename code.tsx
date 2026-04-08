@@ -31,6 +31,10 @@ function TodoWidget() {
     setTodos([...todos, { id: String(Date.now()), text: trimmed, done: false }]);
   }
 
+  function deleteTodo(id: string) {
+    setTodos(todos.filter(t => t.id !== id));
+  }
+
   function openDatePicker() {
     return new Promise<void>(resolve => {
       figma.showUI(__html__, { width: 280, height: 56, title: 'Set deadline' });
@@ -130,6 +134,13 @@ function TodoWidget() {
               onClick={() => toggleTodo(todo.id)}
             >
               {todo.text}
+            </Text>
+            <Text
+              fontSize={14}
+              fill={GRAY_RGB}
+              onClick={() => deleteTodo(todo.id)}
+            >
+              ×
             </Text>
           </AutoLayout>
         ))}
