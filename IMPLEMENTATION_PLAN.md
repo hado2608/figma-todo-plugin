@@ -9,17 +9,22 @@
 ## Visual Design Reference
 
 ```
-  to-dos          ← small cyan label above card (separate text node)
-┌──────────────────────────────┐
-│  Header          (purple bg) │  ← bold white title
-│  by Wed 4/8                  │  ← italic white deadline subtitle
-├──────────────────────────────┤
-│  □  UI kit done              │  ← square checkbox + dark text
-│  □  need the testing plan    │
-│  □  reconstruct the MVP      │
-│     • 20-30 mins test        │  ← optional sub-bullet
-│  □  try to reconstruct page  │
-└──────────────────────────────┘
+  to-dos                         ← small cyan label above card
+┌──────────────────────────────────┐
+│  Header                  📅      │  ← title + calendar icon (right)
+│  by Wed 4/8                      │  ← italic deadline row (only if date set)
+├──────────────────────────────────┤
+│  □  UI kit done                  │  ← square checkbox + dark text
+│  □  need the testing plan        │
+│  □  reconstruct the MVP          │
+│  □  try to reconstruct page      │
+└──────────────────────────────────┘
+
+  Without date:
+┌──────────────────────────────────┐
+│  Header                  📅      │  ← just one row, no subtitle
+├──────────────────────────────────┤
+│  ...                             │
 ```
 
 **Colors:**
@@ -103,7 +108,7 @@ Each sticker stores its state in the frame's `pluginData`:
 ```ts
 interface TodoSticker {
   header: string;
-  deadline: string;   // e.g. "by Wed 4/8" — optional subtitle
+  deadline: string | null;  // ISO date string e.g. "2026-04-08", null if not set
   todos: Array<{
     id: string;
     text: string;
@@ -111,6 +116,8 @@ interface TodoSticker {
   }>;
 }
 ```
+
+Date is formatted for display as `"by [Day Mon D]"` (e.g. `"by Wed Apr 8"`) using `toLocaleDateString`.
 
 Persisted via `node.setPluginData('todos', JSON.stringify(data))` so sticker state survives across sessions.
 
@@ -142,7 +149,10 @@ Persisted via `node.setPluginData('todos', JSON.stringify(data))` so sticker sta
   - "Add Sticker" button
   - Hint label: "or press **S**"
 - [ ] **Edit view** (sticker selected):
-  - Header input field at top
+  - Header input field at top (same row as calendar icon button)
+  - Calendar icon button → opens native `<input type="date">` date picker
+  - If date selected: show "by [formatted date]" preview below header input; show clear (×) button
+  - If no date: deadline row hidden — only header row shows
   - To-do list with checkboxes/strikethrough items
   - Text input + Enter key to add new to-do
   - Click existing item to toggle done/undone
@@ -155,9 +165,13 @@ Persisted via `node.setPluginData('todos', JSON.stringify(data))` so sticker sta
 ### Phase 4 — Sticker Rendering Logic
 - [ ] Outer `FrameNode`: auto-layout vertical, ~400px wide, no corner radius
 - [ ] **"to-dos" label**: small `TextNode` above the card, color `#60A5FA`, placed separately on canvas
-- [ ] **Header section** (`FrameNode`, purple `#7C3AED` fill, padding 24px):
-  - Title: `TextNode`, bold, white, ~28px
-  - Deadline subtitle: `TextNode`, italic, `#D8B4FE`, ~18px (optional field)
+- [ ] **Header section** (`FrameNode`, purple `#7C3AED` fill, padding 24px, auto-layout vertical):
+  - Row 1: horizontal auto-layout frame
+    - Title: `TextNode`, bold, white, ~28px (fills width)
+    - Calendar icon: `VectorNode` or emoji placeholder, right-aligned, white
+  - Row 2 (conditional — only rendered if deadline is set):
+    - `TextNode`, italic, `#D8B4FE`, ~18px, text = `"by [formatted date]"`
+    - Omit this node entirely when no date is set
 - [ ] **Body section** (`FrameNode`, white fill, auto-layout vertical, padding 24px, gap 16px):
   - Per todo: horizontal auto-layout frame with:
     - Checkbox: `RectangleNode` ~20×20px, stroke `#1A1A1A`, no fill (unchecked) or filled (checked)
