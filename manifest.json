@@ -1,7 +1,6 @@
 {
   "name": "getitdone",
   "id": "getitdone-widget",
-  "api": "1.0.0",
   "widgetApi": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
