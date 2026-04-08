@@ -3,6 +3,7 @@
   "id": "getitdone-widget",
   "api": "1.0.0",
   "widgetApi": "1.0.0",
+  "containsWidget": true,
   "main": "code.js",
   "ui": "ui.html",
   "editorType": ["figma"]
