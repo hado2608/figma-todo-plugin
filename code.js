@@ -72,7 +72,7 @@ function buildSticker(data) {
         yield loadFont('Italic');
         // Outer wrapper (vertical auto-layout, no fill — holds label + card)
         const wrapper = figma.createFrame();
-        wrapper.name = 'getitdone-wrapper';
+        wrapper.name = 'to-do';
         wrapper.layoutMode = 'VERTICAL';
         wrapper.itemSpacing = 6;
         wrapper.paddingTop = 0;
@@ -90,7 +90,7 @@ function buildSticker(data) {
         label.name = 'label';
         label.characters = 'to-dos';
         label.fontName = { family: 'Inter', style: 'Regular' };
-        label.fontSize = 13;
+        label.fontSize = 16;
         label.fills = [{ type: 'SOLID', color: CYAN }];
         wrapper.appendChild(label);
         // Card frame (vertical auto-layout)
@@ -146,7 +146,7 @@ function buildHeaderSection(data) {
     titleText.name = 'title';
     titleText.characters = data.header || 'Header';
     titleText.fontName = { family: 'Inter', style: 'Bold' };
-    titleText.fontSize = 28;
+    titleText.fontSize = 16;
     titleText.fills = [{ type: 'SOLID', color: WHITE }];
     titleText.layoutGrow = 1;
     titleRow.appendChild(titleText);
@@ -155,7 +155,7 @@ function buildHeaderSection(data) {
     calIcon.name = 'calendar-icon';
     calIcon.characters = '📅';
     calIcon.fontName = { family: 'Inter', style: 'Regular' };
-    calIcon.fontSize = 20;
+    calIcon.fontSize = 16;
     calIcon.fills = [{ type: 'SOLID', color: WHITE }];
     titleRow.appendChild(calIcon);
     header.appendChild(titleRow);
@@ -165,7 +165,7 @@ function buildHeaderSection(data) {
         deadlineText.name = 'deadline';
         deadlineText.characters = formatDeadline(data.deadline);
         deadlineText.fontName = { family: 'Inter', style: 'Italic' };
-        deadlineText.fontSize = 18;
+        deadlineText.fontSize = 16;
         deadlineText.fills = [{ type: 'SOLID', color: LAVENDER }];
         header.appendChild(deadlineText);
     }
@@ -216,10 +216,10 @@ function buildTodoRow(todo) {
         // Checkbox
         const checkbox = figma.createRectangle();
         checkbox.name = 'checkbox';
-        checkbox.resize(20, 20);
+        checkbox.resize(10, 10);
         checkbox.fills = todo.done ? [{ type: 'SOLID', color: NEAR_BLACK }] : [];
         checkbox.strokes = [{ type: 'SOLID', color: NEAR_BLACK }];
-        checkbox.strokeWeight = 2;
+        checkbox.strokeWeight = 1.5;
         checkbox.layoutAlign = 'INHERIT';
         row.appendChild(checkbox);
         // Text
@@ -227,7 +227,7 @@ function buildTodoRow(todo) {
         text.name = 'text';
         text.characters = todo.text;
         text.fontName = { family: 'Inter', style: 'Regular' };
-        text.fontSize = 20;
+        text.fontSize = 16;
         text.fills = [{ type: 'SOLID', color: NEAR_BLACK }];
         text.textDecoration = todo.done ? 'STRIKETHROUGH' : 'NONE';
         text.layoutGrow = 1;
