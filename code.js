@@ -1,228 +1,264 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
+(() => {
+  var __defProp = Object.defineProperty;
+  var __defProps = Object.defineProperties;
+  var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+  var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __propIsEnum = Object.prototype.propertyIsEnumerable;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __spreadValues = (a, b) => {
+    for (var prop in b || (b = {}))
+      if (__hasOwnProp.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    if (__getOwnPropSymbols)
+      for (var prop of __getOwnPropSymbols(b)) {
+        if (__propIsEnum.call(b, prop))
+          __defNormalProp(a, prop, b[prop]);
+      }
+    return a;
+  };
+  var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+
+  // code.tsx
+  var { widget } = figma;
+  var { AutoLayout, Text, Rectangle, Input, useSyncedState } = widget;
+  var PURPLE = "#7C3AED";
+  var WHITE = "#FFFFFF";
+  var DARK = "#1A1A1A";
+  var LAVENDER = "#D8B4FE";
+  var GRAY = "#BBBBBB";
+  var GRAY_RGB = { r: 0.6, g: 0.6, b: 0.6, a: 1 };
+  function TodoWidget() {
+    const [header, setHeader] = useSyncedState("header", "Header");
+    const [todos, setTodos] = useSyncedState("todos", []);
+    const [deadline, setDeadline] = useSyncedState("deadline", null);
+    function toggleTodo(id) {
+      setTodos(todos.map((t) => t.id === id ? __spreadProps(__spreadValues({}, t), { done: !t.done }) : t));
+    }
+    function addTodo(text) {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      setTodos([...todos, { id: String(Date.now()), text: trimmed, done: false }]);
+    }
+    function openDatePicker() {
+      return new Promise((resolve) => {
+        figma.showUI(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    height: 56px;
+    background: #fff;
+  }
+  input[type="date"] {
+    flex: 1;
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+  }
+  input[type="date"]:focus { border-color: #7C3AED; }
+  .btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .set  { background: #7C3AED; color: #fff; }
+  .clear { background: #f0f0f0; color: #555; }
+</style>
+</head>
+<body>
+  <input type="date" id="date-input" />
+  <button class="btn set"   id="set-btn">Set</button>
+  <button class="btn clear" id="clear-btn">Clear</button>
+  <script>
+    window.onmessage = function(e) {
+      var msg = e.data.pluginMessage;
+      if (msg && msg.type === 'set-date' && msg.date) {
+        document.getElementById('date-input').value = msg.date;
+      }
+    };
+    document.getElementById('set-btn').addEventListener('click', function() {
+      var val = document.getElementById('date-input').value;
+      parent.postMessage({ pluginMessage: { type: 'date-selected', date: val || null } }, '*');
     });
-};
-const PLUGIN_DATA_KEY = 'getitdone';
-const STICKER_MARKER = 'getitdone-sticker';
-// Colors
-const PURPLE = { r: 0.486, g: 0.227, b: 0.929 }; // #7C3AED
-const WHITE = { r: 1, g: 1, b: 1 };
-const NEAR_BLACK = { r: 0.102, g: 0.102, b: 0.102 }; // #1A1A1A
-const LAVENDER = { r: 0.847, g: 0.706, b: 0.996 }; // #D8B4FE
-figma.showUI(__html__, { width: 340, height: 480, title: 'getitdone' });
-// On open: check if a sticker is already selected
-const selected = figma.currentPage.selection[0];
-if (selected && selected.getPluginData(STICKER_MARKER) === 'true') {
-    const raw = selected.getPluginData(PLUGIN_DATA_KEY);
-    if (raw) {
-        figma.ui.postMessage({ type: 'load-sticker', data: JSON.parse(raw), nodeId: selected.id });
-    }
-}
-figma.on('selectionchange', () => {
-    const node = figma.currentPage.selection[0];
-    if (node && node.getPluginData(STICKER_MARKER) === 'true') {
-        const raw = node.getPluginData(PLUGIN_DATA_KEY);
-        figma.ui.postMessage({ type: 'load-sticker', data: JSON.parse(raw), nodeId: node.id });
-    }
-    else {
-        figma.ui.postMessage({ type: 'deselect' });
-    }
-});
-figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
-    if (msg.type === 'create-sticker') {
-        const data = { header: 'Header', deadline: null, todos: [] };
-        const sticker = yield buildSticker(data);
-        sticker.x = figma.viewport.center.x - sticker.width / 2;
-        sticker.y = figma.viewport.center.y - sticker.height / 2;
-        figma.currentPage.appendChild(sticker);
-        figma.currentPage.selection = [sticker];
-        figma.viewport.scrollAndZoomIntoView([sticker]);
-        figma.ui.postMessage({ type: 'load-sticker', data, nodeId: sticker.id });
-    }
-    if (msg.type === 'update-sticker') {
-        const node = figma.getNodeById(msg.nodeId);
-        if (!node)
-            return;
-        const data = msg.data;
-        node.setPluginData(PLUGIN_DATA_KEY, JSON.stringify(data));
-        yield rebuildSticker(node, data);
-    }
-    if (msg.type === 'close') {
-        figma.closePlugin();
-    }
-});
-function loadFont(weight) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const family = 'Inter';
-        const style = weight === 'Italic' ? 'Italic' : weight;
-        yield figma.loadFontAsync({ family, style });
+    document.getElementById('clear-btn').addEventListener('click', function() {
+      parent.postMessage({ pluginMessage: { type: 'date-selected', date: null } }, '*');
     });
-}
-function buildSticker(data) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield loadFont('Regular');
-        yield loadFont('Bold');
-        yield loadFont('Italic');
-        // Outer wrapper (vertical auto-layout, no fill — holds label + card)
-        const wrapper = figma.createFrame();
-        wrapper.name = 'to-do';
-        wrapper.layoutMode = 'VERTICAL';
-        wrapper.itemSpacing = 6;
-        wrapper.paddingTop = 0;
-        wrapper.paddingBottom = 0;
-        wrapper.paddingLeft = 0;
-        wrapper.paddingRight = 0;
-        wrapper.fills = [];
-        wrapper.clipsContent = false;
-        wrapper.setPluginData(STICKER_MARKER, 'true');
-        wrapper.setPluginData(PLUGIN_DATA_KEY, JSON.stringify(data));
-        wrapper.counterAxisSizingMode = 'FIXED';
-        wrapper.resize(400, 100); // will grow with content
-        // Card frame (vertical auto-layout)
-        const card = figma.createFrame();
-        card.name = 'card';
-        card.layoutMode = 'VERTICAL';
-        card.itemSpacing = 0;
-        card.paddingTop = 0;
-        card.paddingBottom = 0;
-        card.paddingLeft = 0;
-        card.paddingRight = 0;
-        card.fills = [];
-        card.clipsContent = true;
-        card.counterAxisSizingMode = 'FIXED';
-        card.primaryAxisSizingMode = 'AUTO';
-        card.resize(400, 100);
-        wrapper.appendChild(card);
-        // Header section
-        const header = buildHeaderSection(data);
-        card.appendChild(header);
-        // Body section
-        const body = buildBodySection(data);
-        card.appendChild(body);
-        wrapper.primaryAxisSizingMode = 'AUTO';
-        wrapper.counterAxisSizingMode = 'AUTO';
-        return wrapper;
+  <\/script>
+</body>
+</html>
+`, { width: 280, height: 56, title: "Set deadline" });
+        if (deadline) figma.ui.postMessage({ type: "set-date", date: deadline });
+        figma.ui.on("message", (msg) => {
+          if (msg.type === "date-selected") {
+            setDeadline(msg.date || null);
+            figma.closePlugin();
+            resolve();
+          }
+        });
+      });
+    }
+    return /* @__PURE__ */ figma.widget.h(
+      AutoLayout,
+      {
+        name: "to-do",
+        direction: "vertical",
+        width: 320,
+        effect: [{
+          type: "DROP_SHADOW",
+          color: { r: 0, g: 0, b: 0, a: 0.12 },
+          offset: { x: 0, y: 2 },
+          blur: 8,
+          spread: 0,
+          visible: true,
+          blendMode: "NORMAL"
+        }]
+      },
+      /* @__PURE__ */ figma.widget.h(
+        AutoLayout,
+        {
+          direction: "vertical",
+          fill: PURPLE,
+          padding: 16,
+          spacing: 6,
+          width: "fill-parent"
+        },
+        /* @__PURE__ */ figma.widget.h(
+          AutoLayout,
+          {
+            direction: "horizontal",
+            width: "fill-parent",
+            verticalAlignItems: "center",
+            spacing: 8
+          },
+          /* @__PURE__ */ figma.widget.h(
+            Input,
+            {
+              value: header,
+              onTextEditEnd: (e) => setHeader(e.characters || "Header"),
+              placeholder: "Header",
+              fontFamily: "Inter",
+              fontWeight: "bold",
+              fontSize: 16,
+              fill: WHITE,
+              width: "fill-parent"
+            }
+          ),
+          /* @__PURE__ */ figma.widget.h(Text, { fontSize: 14, onClick: openDatePicker }, "\u{1F4C5}")
+        ),
+        deadline ? /* @__PURE__ */ figma.widget.h(
+          Text,
+          {
+            fontFamily: "Inter",
+            italic: true,
+            fontSize: 13,
+            fill: LAVENDER
+          },
+          formatDeadline(deadline)
+        ) : null
+      ),
+      /* @__PURE__ */ figma.widget.h(
+        AutoLayout,
+        {
+          direction: "vertical",
+          fill: WHITE,
+          padding: { top: 14, bottom: 20, left: 14, right: 14 },
+          spacing: 10,
+          width: "fill-parent"
+        },
+        todos.length === 0 ? /* @__PURE__ */ figma.widget.h(Text, { fontFamily: "Inter", fontSize: 13, fill: GRAY_RGB }, "No to-dos yet.") : null,
+        todos.map((todo) => /* @__PURE__ */ figma.widget.h(
+          AutoLayout,
+          {
+            key: todo.id,
+            direction: "horizontal",
+            spacing: 10,
+            width: "fill-parent",
+            verticalAlignItems: "center"
+          },
+          /* @__PURE__ */ figma.widget.h(
+            Rectangle,
+            {
+              width: 10,
+              height: 10,
+              stroke: DARK,
+              strokeWidth: 1.5,
+              fill: todo.done ? DARK : WHITE,
+              onClick: () => toggleTodo(todo.id)
+            }
+          ),
+          /* @__PURE__ */ figma.widget.h(
+            Text,
+            {
+              fontFamily: "Inter",
+              fontSize: 13,
+              fill: todo.done ? GRAY_RGB : DARK,
+              textDecoration: todo.done ? "strikethrough" : "none",
+              width: "fill-parent",
+              onClick: () => toggleTodo(todo.id)
+            },
+            todo.text
+          )
+        )),
+        /* @__PURE__ */ figma.widget.h(
+          AutoLayout,
+          {
+            direction: "horizontal",
+            spacing: 10,
+            width: "fill-parent",
+            verticalAlignItems: "center"
+          },
+          /* @__PURE__ */ figma.widget.h(
+            Rectangle,
+            {
+              width: 10,
+              height: 10,
+              stroke: GRAY,
+              strokeWidth: 1.5,
+              strokeDashes: [2, 2],
+              fill: WHITE
+            }
+          ),
+          /* @__PURE__ */ figma.widget.h(
+            Input,
+            {
+              value: "",
+              onTextEditEnd: (e) => {
+                if (e.key !== "ESC") addTodo(e.characters);
+              },
+              placeholder: "Add a to-do\u2026",
+              fontFamily: "Inter",
+              fontSize: 13,
+              fill: GRAY,
+              width: "fill-parent"
+            }
+          )
+        )
+      )
+    );
+  }
+  function formatDeadline(iso) {
+    const date = /* @__PURE__ */ new Date(iso + "T00:00:00");
+    return "by " + date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric"
     });
-}
-function buildHeaderSection(data) {
-    const header = figma.createFrame();
-    header.name = 'header';
-    header.layoutMode = 'VERTICAL';
-    header.itemSpacing = 8;
-    header.paddingTop = 24;
-    header.paddingBottom = 24;
-    header.paddingLeft = 24;
-    header.paddingRight = 24;
-    header.fills = [{ type: 'SOLID', color: PURPLE }];
-    header.primaryAxisSizingMode = 'AUTO';
-    header.counterAxisSizingMode = 'FIXED';
-    header.layoutAlign = 'STRETCH';
-    // Title row: header text + calendar icon placeholder
-    const titleRow = figma.createFrame();
-    titleRow.name = 'title-row';
-    titleRow.layoutMode = 'HORIZONTAL';
-    titleRow.primaryAxisAlignItems = 'SPACE_BETWEEN';
-    titleRow.counterAxisAlignItems = 'CENTER';
-    titleRow.fills = [];
-    titleRow.primaryAxisSizingMode = 'FIXED';
-    titleRow.counterAxisSizingMode = 'AUTO';
-    titleRow.layoutAlign = 'STRETCH';
-    const titleText = figma.createText();
-    titleText.name = 'title';
-    titleText.characters = data.header || 'Header';
-    titleText.fontName = { family: 'Inter', style: 'Bold' };
-    titleText.fontSize = 16;
-    titleText.fills = [{ type: 'SOLID', color: WHITE }];
-    titleText.layoutGrow = 1;
-    titleRow.appendChild(titleText);
-    // Calendar icon (text emoji as placeholder)
-    const calIcon = figma.createText();
-    calIcon.name = 'calendar-icon';
-    calIcon.characters = '📅';
-    calIcon.fontName = { family: 'Inter', style: 'Regular' };
-    calIcon.fontSize = 16;
-    calIcon.fills = [{ type: 'SOLID', color: WHITE }];
-    titleRow.appendChild(calIcon);
-    header.appendChild(titleRow);
-    // Deadline row (only if deadline is set)
-    if (data.deadline) {
-        const deadlineText = figma.createText();
-        deadlineText.name = 'deadline';
-        deadlineText.characters = formatDeadline(data.deadline);
-        deadlineText.fontName = { family: 'Inter', style: 'Italic' };
-        deadlineText.fontSize = 16;
-        deadlineText.fills = [{ type: 'SOLID', color: LAVENDER }];
-        header.appendChild(deadlineText);
-    }
-    return header;
-}
-function buildBodySection(data) {
-    const body = figma.createFrame();
-    body.name = 'body';
-    body.layoutMode = 'VERTICAL';
-    body.itemSpacing = 4;
-    body.paddingTop = 16;
-    body.paddingBottom = 24;
-    body.paddingLeft = 16;
-    body.paddingRight = 16;
-    body.fills = [{ type: 'SOLID', color: WHITE }];
-    body.primaryAxisSizingMode = 'AUTO';
-    body.counterAxisSizingMode = 'FIXED';
-    body.layoutAlign = 'STRETCH';
-    if (data.todos.length === 0) {
-        const placeholder = figma.createText();
-        placeholder.name = 'placeholder';
-        placeholder.fontName = { family: 'Inter', style: 'Regular' };
-        placeholder.characters = 'No to-dos yet.';
-        placeholder.fontSize = 16;
-        placeholder.fills = [{ type: 'SOLID', color: { r: 0.7, g: 0.7, b: 0.7 } }];
-        body.appendChild(placeholder);
-        return body;
-    }
-    for (const todo of data.todos) {
-        const line = figma.createText();
-        line.name = `todo-${todo.id}`;
-        line.fontName = { family: 'Inter', style: 'Regular' };
-        line.characters = (todo.done ? '\u25A0' : '\u25A1') + '  ' + todo.text;
-        line.fontSize = 16;
-        line.lineHeight = { value: 24, unit: 'PIXELS' };
-        line.fills = [{ type: 'SOLID', color: NEAR_BLACK }];
-        line.textDecoration = todo.done ? 'STRIKETHROUGH' : 'NONE';
-        line.textAutoResize = 'HEIGHT';
-        line.layoutAlign = 'STRETCH';
-        body.appendChild(line);
-    }
-    return body;
-}
-function rebuildSticker(wrapper, data) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield loadFont('Regular');
-        yield loadFont('Bold');
-        yield loadFont('Italic');
-        const card = wrapper.findOne(n => n.name === 'card');
-        if (!card)
-            return;
-        // Rebuild header
-        const oldHeader = card.findOne(n => n.name === 'header');
-        if (oldHeader)
-            oldHeader.remove();
-        const newHeader = buildHeaderSection(data);
-        card.insertChild(0, newHeader);
-        // Rebuild body
-        const oldBody = card.findOne(n => n.name === 'body');
-        if (oldBody)
-            oldBody.remove();
-        const newBody = buildBodySection(data);
-        card.appendChild(newBody);
-    });
-}
-function formatDeadline(iso) {
-    const date = new Date(iso + 'T00:00:00');
-    return 'by ' + date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-}
+  }
+  widget.register(TodoWidget);
+})();

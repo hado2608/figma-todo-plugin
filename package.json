@@ -2,11 +2,13 @@
   "name": "getitdone",
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch"
+    "build": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@figma/plugin-typings": "*",
+    "@figma/widget-typings": "*",
+    "esbuild": "^0.21.0",
     "typescript": "^5.0.0"
   }
 }

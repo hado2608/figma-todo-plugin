@@ -1,22 +1,41 @@
-# Figma To-Do Sticker Plugin — Implementation Plan
+# getitdone — Figma Widget Implementation Plan
 
 ## Overview
 
-A Figma plugin that lets users place a sticky-note-style to-do list directly onto their canvas. Each sticker is a native Figma frame that can be edited via the plugin UI.
+**getitdone** is a **Figma Widget** (not a plugin) that places an interactive to-do card directly on the Figma canvas. Users interact with the widget ON the canvas — typing todos, clicking checkboxes, editing the header — without any side panel.
+
+> **Why Widget, not Plugin?**
+> Figma Plugins create static frames/text nodes that users can't interact with on canvas.
+> Figma Widgets ARE interactive canvas elements — clicks, inputs, and state are all live on the sticker itself.
 
 ---
 
 ## User Flow
 
-1. User opens the plugin panel
-2. User clicks **"Add Sticker"** → a to-do sticker frame appears on the canvas
-3. User clicks the sticker (or selects it) → plugin UI switches to **edit mode**
-4. In edit mode:
-   - User can set/edit a **header** (title of the sticker)
-   - User can **type a to-do item** and press **Enter** to add it
-   - User can **click a to-do item** to cross it out (strikethrough)
-   - User can **delete** a to-do item
-5. Changes are written back to the Figma frame on the canvas in real time
+1. Open Figma → **Widgets** menu → Development → Import widget from manifest
+2. Place widget on canvas via **Shift+I** → Widgets tab → getitdone
+3. **On the sticker itself:**
+   - Click the header to edit it inline
+   - Click 📅 to open a small date picker popup → sets deadline below header
+   - Click "Add a to-do…" row → type, press Enter → new todo appears
+   - Click the □ box or the text → toggles done (■ + strikethrough)
+
+---
+
+## Visual Design
+
+```
+┌──────────────────────────────────┐
+│  Header (editable)        📅     │  ← purple, bold, click to edit
+│  by Wed Apr 8                    │  ← italic lavender, only if date set
+├──────────────────────────────────┤
+│  □  hfkj                         │  ← click box OR text to toggle done
+│  ■  fjdkjfd (strikethrough)      │  ← filled box = done
+│  ▫  Add a to-do…                 │  ← dashed box + input, click to type
+└──────────────────────────────────┘
+```
+
+**Colors:** Purple header `#7C3AED` · White body `#FFFFFF` · Dark text `#1A1A1A` · Lavender deadline `#D8B4FE`
 
 ---
 
@@ -26,106 +45,101 @@ A Figma plugin that lets users place a sticky-note-style to-do list directly ont
 
 ```
 figma-todo-plugin/
-├── manifest.json         # Plugin config
-├── code.ts               # Main thread (runs in Figma sandbox)
-├── ui.html               # Plugin UI (iframe)
-├── tsconfig.json         # TypeScript config
-├── package.json          # Dev dependencies
+├── manifest.json         # Widget config (widgetApi: "1.0.0")
+├── code.tsx              # Widget JSX — all canvas interaction logic
+├── ui.html               # Date picker popup (opened by 📅 click)
+├── esbuild.config.js     # Build script (bundles TSX → code.js)
+├── tsconfig.json         # TypeScript + JSX config
+├── package.json          # esbuild + @figma/widget-typings
 └── IMPLEMENTATION_PLAN.md
 ```
 
-### Data Model
-
-Each sticker stores its state in the frame's `pluginData`:
+### Data Model (persisted via `useSyncedState`)
 
 ```ts
-interface TodoSticker {
-  header: string;
-  todos: Array<{
-    id: string;
-    text: string;
-    done: boolean;
-  }>;
+interface Todo {
+  id: string;
+  text: string;
+  done: boolean;
 }
+
+// Widget state:
+const [header, setHeader]     = useSyncedState<string>('header', 'Header');
+const [todos, setTodos]       = useSyncedState<Todo[]>('todos', []);
+const [deadline, setDeadline] = useSyncedState<string | null>('deadline', null);
 ```
 
-This is persisted via `node.setPluginData('todos', JSON.stringify(data))` so the sticker state survives across sessions.
+`useSyncedState` persists state inside the Figma file — state survives reloads, is shared across collaborators in real time.
 
 ---
 
 ## Implementation Steps
 
-### Phase 1 — Project Setup
-- [ ] Initialize npm project with TypeScript
-- [ ] Install `@figma/plugin-typings`
-- [ ] Set up `tsconfig.json` and build script
-- [ ] Write `manifest.json` with correct permissions (`currentpage`)
+### Phase 1 — Project Setup ✅ (partially done)
+- [x] `manifest.json` → `widgetApi: "1.0.0"`, `editorType: ["figma"]`
+- [x] `package.json` → `esbuild`, `@figma/widget-typings`
+- [x] `tsconfig.json` → `jsx: "react"`, `jsxFactory: "figma.widget.h"`
+- [ ] `esbuild.config.js` → bundle `code.tsx` → `code.js`, inject `ui.html` as `__html__`
+- [ ] `npm install`
 
-### Phase 2 — Plugin Main Thread (`code.ts`)
-- [ ] Handle `"create-sticker"` message → draw a sticky frame on canvas
-  - Frame: ~300×400px, yellow fill, rounded corners
-  - Header text node at top
-  - Placeholder to-do text nodes below
-  - Save initial state via `setPluginData`
-- [ ] Handle `"update-sticker"` message → update frame contents from UI data
-  - Clear existing text nodes
-  - Re-render header + todos (done items get strikethrough decoration)
-- [ ] Handle `selectionchange` event → detect if selected node is a sticker
-  - Read `getPluginData` and send to UI to populate edit form
-- [ ] On plugin open, check if a sticker is already selected → go straight to edit mode
+### Phase 2 — Widget Code (`code.tsx`)
+- [ ] Widget component with `useSyncedState` for header, todos, deadline
+- [ ] Purple `AutoLayout` header:
+  - `Input` for editable title (click to edit inline on canvas)
+  - `Text` "📅" that calls `openDatePicker()` (opens `ui.html` popup)
+  - Conditional italic deadline `Text` row
+- [ ] White `AutoLayout` body:
+  - Per todo: `Rectangle` checkbox (10×10, click → toggle done) + `Text` (click → toggle done)
+  - Done state: checkbox fill = `#1A1A1A`, text has `textDecoration="strikethrough"`
+  - Add-todo row: dashed `Rectangle` + `Input` (Enter to add, ESC to cancel)
 
-### Phase 3 — Plugin UI (`ui.html`)
-- [ ] **Default view** (no sticker selected):
-  - "Add Sticker" button
-- [ ] **Edit view** (sticker selected):
-  - Header input field at top
-  - To-do list with checkboxes/strikethrough items
-  - Text input + Enter key to add new to-do
-  - Click existing item to toggle done/undone
-  - Optional: delete button per item
-- [ ] Post messages to `code.ts` on every change (live sync)
-- [ ] Style: clean, minimal, matches Figma's aesthetic
+### Phase 3 — Date Picker UI (`ui.html`)
+- [ ] Minimal HTML with `<input type="date">` + Set/Clear buttons
+- [ ] On Set: `postMessage({ type: 'date-selected', date: value })`
+- [ ] On Clear: `postMessage({ type: 'date-selected', date: null })`
+- [ ] Widget receives message → `setDeadline(msg.date)` → `figma.closePlugin()`
 
-### Phase 4 — Sticker Rendering Logic
-- [ ] Use Figma `TextNode` for each to-do item
-- [ ] Apply `TextDecoration = "STRIKETHROUGH"` for done items
-- [ ] Use `FrameNode` as container (auto-layout vertical for easy stacking)
-- [ ] Set `fills` to a warm yellow (`#FFF176`) for the sticker background
-- [ ] Header uses bold weight; to-do items use regular weight
-
-### Phase 5 — Polish
-- [ ] Handle edge cases: empty todos, very long text, no header
-- [ ] Sticker visual: drop shadow, slightly rotated feel (optional)
-- [ ] "Delete Sticker" button in edit view
-- [ ] Keyboard shortcut to add sticker
+### Phase 4 — Build & Test
+- [ ] `npm run build` → compiles `code.tsx` + inlines `ui.html` → outputs `code.js`
+- [ ] Load in Figma: **Widgets → Development → Import widget from manifest**
+- [ ] Place widget, verify: header edit, todo add (Enter), checkbox toggle, date picker
 
 ---
 
-## Key Figma API Concepts Used
+## Key Widget API Concepts
 
 | Concept | Purpose |
 |---|---|
-| `figma.createFrame()` | Create the sticker container |
-| `figma.createText()` | Add header + to-do text nodes |
-| `node.setPluginData()` | Persist todo state on the node |
-| `node.getPluginData()` | Read todo state when re-selecting |
-| `figma.on('selectionchange')` | Detect when user clicks a sticker |
-| `figma.ui.postMessage()` | Send data from plugin to UI |
-| `figma.ui.onmessage` | Receive data from UI in plugin |
-| Auto-layout (`primaryAxisAlignItems`) | Stack todos vertically in frame |
+| `widget.register(Component)` | Register the widget root component |
+| `useSyncedState(key, default)` | Persistent state synced to Figma file |
+| `AutoLayout` | Figma auto-layout frame (widget version) |
+| `Input` | Editable text field on canvas |
+| `Rectangle` | The 10×10 checkbox square |
+| `Text` | Display text, supports `onClick` |
+| `figma.showUI(__html__, opts)` | Open date picker popup |
+| `figma.ui.on('message', ...)` | Receive message from popup |
+| `figma.closePlugin()` | Close popup after date selected |
 
 ---
 
 ## Tech Stack
 
-- **TypeScript** (compiled to JS for Figma sandbox)
-- **Vanilla HTML/CSS/JS** for the UI panel (no framework needed)
-- **Figma Plugin API** (no external dependencies at runtime)
+- **TypeScript + JSX** (`code.tsx`) compiled via **esbuild**
+- **`@figma/widget-typings`** for type safety
+- **Vanilla HTML** for the date picker popup (`ui.html`)
+- No runtime dependencies
+
+---
+
+## Keyboard Shortcut
+
+`⌥⇧S` is no longer needed — widgets are placed from the Widgets menu (Shift+I).
+The shortcut can be removed from the plan.
 
 ---
 
 ## GitHub Branch Strategy
 
-- `main` — stable, plan + scaffold
-- `feat/sticker-core` — Phase 2 & 3 (core create + edit flow)
-- `feat/sticker-polish` — Phase 4 & 5 (rendering + polish)
+- `main` — stable plan
+- `feat/sticker-core` — current branch (widget implementation)
+- `feat/sticker-polish` — Phase 4 polish after core works

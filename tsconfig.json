@@ -3,7 +3,10 @@
     "target": "ES6",
     "lib": ["ES6"],
     "strict": true,
-    "types": ["@figma/plugin-typings"]
+    "jsx": "react",
+    "jsxFactory": "figma.widget.h",
+    "jsxFragmentFactory": "figma.widget.Fragment",
+    "types": ["@figma/widget-typings"]
   },
-  "files": ["code.ts"]
+  "files": ["code.tsx"]
 }
