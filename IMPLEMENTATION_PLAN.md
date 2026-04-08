@@ -1,15 +1,15 @@
-# Figma To-Do Sticker Plugin — Implementation Plan
+# getitdone — Figma Plugin Implementation Plan
 
 ## Overview
 
-A Figma plugin that lets users place a sticky-note-style to-do list directly onto their canvas. Each sticker is a native Figma frame that can be edited via the plugin UI.
+**getitdone** is a Figma plugin that lets users place sticky-note-style to-do lists directly onto their canvas. Each sticker is a native Figma frame that can be edited via the plugin UI.
 
 ---
 
 ## User Flow
 
 1. User opens the plugin panel
-2. User clicks **"Add Sticker"** → a to-do sticker frame appears on the canvas
+2. User clicks **"Add Sticker"** (or presses **`S`**) → a to-do sticker frame appears on the canvas
 3. User clicks the sticker (or selects it) → plugin UI switches to **edit mode**
 4. In edit mode:
    - User can set/edit a **header** (title of the sticker)
@@ -20,18 +20,51 @@ A Figma plugin that lets users place a sticky-note-style to-do list directly ont
 
 ---
 
+## Keyboard Shortcut: S to Add Sticker
+
+| Key       | Figma Design Canvas | FigJam      | Plugin UI (iframe)  |
+|-----------|---------------------|-------------|---------------------|
+| `S`       | Not assigned ✓      | Add sticky  | **Add sticker ← use** |
+| `Shift+S` | Section tool ✗      | —           | —                   |
+
+**Decision:** Use `S` within the plugin panel UI. Plugin keyboard shortcuts are scoped to the plugin iframe and cannot conflict with Figma canvas shortcuts regardless. `S` is unassigned in Figma Design (only used in FigJam, which is a separate product).
+
+**Implementation:** In `ui.html`:
+```js
+document.addEventListener('keydown', e => {
+  if ((e.key === 's' || e.key === 'S') && !e.metaKey && !e.ctrlKey) {
+    addSticker();
+  }
+});
+```
+
+---
+
 ## Architecture
 
 ### Files
 
 ```
 figma-todo-plugin/
-├── manifest.json         # Plugin config
+├── manifest.json         # Plugin config (name: "getitdone")
 ├── code.ts               # Main thread (runs in Figma sandbox)
 ├── ui.html               # Plugin UI (iframe)
 ├── tsconfig.json         # TypeScript config
 ├── package.json          # Dev dependencies
 └── IMPLEMENTATION_PLAN.md
+```
+
+### manifest.json (key fields)
+
+```json
+{
+  "name": "getitdone",
+  "id": "<generated-plugin-id>",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"]
+}
 ```
 
 ### Data Model
@@ -49,7 +82,7 @@ interface TodoSticker {
 }
 ```
 
-This is persisted via `node.setPluginData('todos', JSON.stringify(data))` so the sticker state survives across sessions.
+Persisted via `node.setPluginData('todos', JSON.stringify(data))` so sticker state survives across sessions.
 
 ---
 
@@ -59,7 +92,7 @@ This is persisted via `node.setPluginData('todos', JSON.stringify(data))` so the
 - [ ] Initialize npm project with TypeScript
 - [ ] Install `@figma/plugin-typings`
 - [ ] Set up `tsconfig.json` and build script
-- [ ] Write `manifest.json` with correct permissions (`currentpage`)
+- [ ] Write `manifest.json` with `name: "getitdone"` and `editorType: ["figma"]`
 
 ### Phase 2 — Plugin Main Thread (`code.ts`)
 - [ ] Handle `"create-sticker"` message → draw a sticky frame on canvas
@@ -77,12 +110,15 @@ This is persisted via `node.setPluginData('todos', JSON.stringify(data))` so the
 ### Phase 3 — Plugin UI (`ui.html`)
 - [ ] **Default view** (no sticker selected):
   - "Add Sticker" button
+  - Hint label: "or press **S**"
 - [ ] **Edit view** (sticker selected):
   - Header input field at top
   - To-do list with checkboxes/strikethrough items
   - Text input + Enter key to add new to-do
   - Click existing item to toggle done/undone
   - Optional: delete button per item
+- [ ] Keyboard shortcut: `S` key (when plugin panel is focused) → triggers Add Sticker
+  - Scoped to iframe only — zero conflict with Figma canvas shortcuts
 - [ ] Post messages to `code.ts` on every change (live sync)
 - [ ] Style: clean, minimal, matches Figma's aesthetic
 
@@ -97,7 +133,6 @@ This is persisted via `node.setPluginData('todos', JSON.stringify(data))` so the
 - [ ] Handle edge cases: empty todos, very long text, no header
 - [ ] Sticker visual: drop shadow, slightly rotated feel (optional)
 - [ ] "Delete Sticker" button in edit view
-- [ ] Keyboard shortcut to add sticker
 
 ---
 
